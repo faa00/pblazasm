@@ -7,10 +7,9 @@
 
 ## defines
 
-INC = ../common
-
 RM = rm
-CC = gcc
+MP = "C:/tcc/tcc.exe"
+CC = "C:/tcc/tcc.exe"
  
 C_SRCS += \
 ./pBlazDIS.c \
@@ -19,11 +18,11 @@ C_SRCS += \
 ../common/pbLibgen.c \
 ../common/getopt.c
 
-EXE = "./pBlazDIS"
+EXE = "./pBlazDIS.exe"
 OBJS = $(C_SRCS:.c=.o)
 LIBS = 
-INCS = -I$(INC)
-CFLAGS = $(INCS) -g3 -Wall -c -O3 -DTCC -DHAVE_STRING_H
+INCS = -I$(MP)"/include" -I"./inc" -I"../common"
+CFLAGS = $(INCS) -g3 -DWINDOWS -Wall -c -O3 -DTCC -DHAVE_STRING_H
 
 ## rules
 
@@ -32,7 +31,7 @@ all:	test
 
 test:	$(EXE)
 #	$(EXE) -v ../pBlazASM/pBlazASM_Syntax.mem
-	$(EXE) -v -6 all_kcpsm6_syntax_disasm.hex
+	$(EXE) -v -6 C:/Users/henk/Documents/KCPSM6_v115/all_kcpsm6_syntax_disasm.hex
 
 # Tool invocations
 $(EXE):	$(OBJS)

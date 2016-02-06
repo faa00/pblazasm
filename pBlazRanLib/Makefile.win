@@ -1,10 +1,9 @@
 
 ## defines
 
-INC = ../common
-
-RM = rm
-CC = gcc
+RM = "rm"
+MP = "C:/MinGW32/include"
+CC = "gcc"
 
 C_SRCS += \
 ./pBlazRanLib.c \
@@ -15,11 +14,11 @@ C_SRCS += \
 
 #../common/getopt.c
 
-EXE = "./pBlazRunLib"
+EXE = "./pBlazASM.exe"
 OBJS = $(C_SRCS:.c=.o)
 LIBS = 
-INCS = -I$(INC)
-CFLAGS = $(INCS) -g3 -Wall -c -O3 -DHAVE_STRING_H
+INCS = -I$(MP) -I../common
+CFLAGS = $(INCS) -g3 -DWINDOWS -Wall -c -O3 -DHAVE_STRING_H
 
 ## rules
 

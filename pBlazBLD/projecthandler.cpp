@@ -148,11 +148,11 @@ void QmtxProjectHandler::Load( QString filename ) {
 }
 
 void QmtxProjectHandler::Save() {
-    _save() ;
+    //_save() ;
 }
 
 void QmtxProjectHandler::SaveAs() {
-    _save_as() ;
+    //_save_as() ;
 }
 
 void QmtxProjectHandler::addSourceFile( QString filename ) {
