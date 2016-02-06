@@ -1,0 +1,125 @@
+#summary Error messages of the pBlazASM suite of Picoblaze tools.
+
+=pBlazASM=
+
+==assemby parsing errors==
+
+===? unexpected tokens==
+Characters which make no sense are found in the source line.
+
+===? doubly defined===
+A constant or label is already defined earlier in the source.
+
+===? undefined===
+A constant is used that is not previously defined.
+
+===? phasing error===
+An address mismatch occured between various phases (passes) of the assembler.
+This can occur when .ORG is used with non-constant values.
+
+===? missing symbol===
+A symbol is expected, for instance in the operand fields.
+
+===? syntax error===
+The source line is not following the basic syntax rules:
+{{{
+[<label:] <opcode> <operand>[, <operand>] [; comment]
+}}}
+
+===? syntax error in expression===
+Malformed expression encountered, like:
+{{{
+value  .EQU  1!9
+}}}
+
+===? syntax error in value===
+A value is expected, not a label or a register name.
+
+===? value out of range===
+The specified value or result of an expression does not fit in the instruction field available; values over 0xFF can be used as byte constants. An INST can not be larger than 0x3FFFF.
+
+===? syntax error in operator===
+
+===? syntax error, register expected==
+A register is expected, not a constant or label.
+
+===? comma expected===
+A comma is expected between operands.
+
+===? unexpected characters===
+Unexpected charaters are encoutered; example: a hexadecimal value can not contain a 'G' through 'Z', etc.
+
+===? expression expected===
+An operand expression is expected, or an expression is terminated unexpectedly.
+
+===? out of code space===
+The program is longer than the .END statement apecified.
+
+===? wrong scratchpad size===
+The allowed sctatchpad sizes are: 64 128 or 256 bytes.
+
+===? out of scratchpad range===
+More bytes are used in the sctachpad, by using .BYT, .TX. BUF etc. than availabe as specified by .SCR.
+
+===? not-implemented===
+Some opcodes are not supported anymore or not in the chosen mode.
+Typically not all KCPSM or pBlazIDE opcodes or directives are supported.
+
+===? internal error===
+pBlazASM encountered some internal error. Please report occurences to pblazasm@mediatronix.com.
+
+
+== file I/O errors ==
+
+===? unable to open source file===
+Could not open the specified source file, maybe it is in an other directory.
+
+===? unable to create LST file===
+The specified LST file can not be created or written to. Maybe the file is open is an other program.
+
+===? unable to re-open source file===
+Unlikely. Could occur is during execution of pBlazASM the source file is deleted.
+
+===? unable to create data MEM file===
+The specified data MEM file (.SCR) can not be created or written to. Maybe the file is open is an other program.
+
+===? unable to create code MEM file===
+The specified code MEM file (.MEM) can not be created or written to. Maybe the file is open is an other program.
+
+===? data and code overlap at:===
+When scratchpad contents is to be merged with the code, an overlap has occured. Usually this is because of a wrong specification of .SCR.
+
+----
+=pBlazMRG=
+
+==file I/O errors==
+
+===? Unable to open template file===
+Could not open the specified template file, maybe it is in an other directory.
+
+===? Unable to open output file===
+The specified file can not be created or written to. Maybe the file is open is an other program.
+
+===? Maximum of code files reached===
+A maximum of 16 code or data files can be merged into one template.
+
+===? Bad address in code MEM file===
+An address out of range is specified in the code MEM (.MEM) file.
+
+===? Bad address in data MEM file===
+An address out of range is specified in the data MEM (.SCR) file.
+
+===? Missing address in code MEM file===
+No starting address is given in the code MEM (.MEM) file.
+
+===? Missing address in data MEM file===
+No starting address is given in the data MEM (.SCR) file.
+
+===? missing template file===
+No template file was specified in the command line. There is no default value.
+
+===? missing option===
+An option value was required.
+
+===? unknown option===
+The specified option flag is not recognized as a valid option for pBlazMRG.

@@ -1,0 +1,440 @@
+#summary Picoblaze (R) command line assembler and merger
+#labels pBlazASM,Picoblaze,Xilinx,pBlazIDE,pBlazSIM,pBlazBIT
+
+= Introduction =
+The main feature of this assembler is the possibility to initialize the contents of the scratch-pad memory. The scratch-pad memory can be the second port of the code rom, or distributed RAM. You can write:
+
+{{{
+        .SCR   0x380, 256 ; equal to 0x700 as seen from the 8 bit-port.
+prompt  .TXT  "\r\n>>"   ; 5 characters, CR, LF, 2 '>'s and a trailing zero.
+count   .BUF   4         ; uninitialized 4 byte variable
+end     .BYT   0x55      ; initialized 1 byte variable
+}}}
+
+
+= Usage =
+
+===pBlazASM===
+Syntax:
+{{{
+pBlazASM -3|-6 [-k] [-v] [-f] [-m[<MEMfile>]] [-s[<MEMfile>]] [-l[<LSTfile>]] <input file> <input file> <input file> ...
+}}}
+Example for Picoblaze-6:
+{{{
+pBlazASM -6 -m -s -l source.psm
+}}}
+will generate 2 Xilinx MEM files, source.mem and source.scr. These can be used to initialize code and scratchpad RAMs using pBlazMRG.
+{{{
+options:
+-3      select Picoblaze-3, mandatory
+-6      select Picoblaze-6, mandatory
+-m/-M   creates a MEM code (.MEM) file (not in combo with -x)
+-x/-X   creates a HEX code (.HEX) file (not in combo with -m)
+-s/-S   creates a data MEM (.SCR) file
+-l      creates a LST file
+-k      select KCPSM mode with limited expression handling (-3 only)
+-v      generates verbose reporting
+-f      with -l creates a list file without code to replace the source
+}}}
+Notes: 
+  * All (max 255) input files are assembled to one output.
+  * Option -k (KCPSM mode) is not supported in Picoblaze-6 mode.
+  * M, S and X generate fully populated MEM files for Data2Mem.
+
+
+===pBlazMRG===
+Syntax:
+{{{
+pBlazMRG [-v] [-s<MEM data inputfile>[+offset]]* [-c<MEM code inputfile>[+offset]]* -e<entity_name> -t<TPL inputfile> <ROM outputfile>
+}}}
+Example:
+{{{
+pBlazMRG -ssource.scr -csource.mem -ttemplate.vhd -ecoderom coderom.vhd
+}}}
+will merge code and data in a template for a blockram to generate a VHDL coderom. This assumes code and data reside in the same blockram. In the source code (here source.psm) a .SCR directive must be specified.
+{{{
+options:
+-v      generates verbose reporting
+-s      loads one or more data MEM files
+-c      loads one or more code MEM files
+-e      name of the entity name in the HDL output file
+-t      HDL template file for the code or data rom
+}}}
+
+= Source code syntax =
+
+== Constants and expressions ==
+General syntax of the C language is followed. However, operator precedence is not maintained. Use ()'s for precedence.
+
+Note: This may change in the future to full C language precedence.
+
+Example definitions:
+{{{
+GEN2_ACK	.EQU   0b_01_0000_0000_0000_0000
+PacketHeaderIQ1	.EQU   ( ( phPayloadLenIQ >> 8 ) & 1 ) | ( ( phTag & 31 ) << 1 ) | ( 0 << phS ) | ( 0 << phF )
+ADRF6850_FRAC	.EQU   (( 1 * 2 * ADRF6850_LO ) - ( ADRF6850_INT * ADRF6850_FPFD )) * (1 << 25) / ADRF6850_FPFD
+inkey           .BYT   0x2B, 0x7E, 0x15, 0x16, 0x28, 0xAE, 0xD2, 0xA6, 0xAB, 0xF7, 0x15, 0x88, 0x09, 0xCF, 0x4F, 0x3C
+
+ADF4351_REG2_CHARGE_PUMP_CURR_uA .DEF   ( ( ( ( ( @1 ) - 312 ) / 312 ) & 0xF ) << 9 )
+
+mask    .EQU   0xFFFE_0000_0000_7FFF      // hexadecimal constant
+}}}
+Example instructions:
+{{{
+        COMP   s0, 's'                    // character constant
+
+        ADD    s0, 'A' - 10 - '0'         // character constants
+
+bSCLK   .EQU   0b00010000                 // binary constant
+        AND    sF, ~ bSCLK                // clear SCLK bit (~ is complement)
+
+        MOVE   s1, ( 1000 << 2 ) >> 8	  // set initial gain
+        MOVE   s2, ( 1000 << 2 ) & 0xFF
+        MOVE   s0, MAX2830_POWER | (MAX2830_CEN << 3)
+
+// _ are allowed for clarity in constants
+        MOVE   sF, 0b00_000_100           // binary constant
+        MOVE   sF, 1_024 >> 8             // equal to 4 (1024/256)
+}}}
+
+= Comments =
+{{{
+// comments allowed
+; comments allowed
+}}}
+
+= Directives =
+===.END===
+Mark the end of the code rom. 
+{{{
+  .END 0xFFF ; can be 1k, 2k or 4k
+}}}
+
+===.EQU===
+Equate the value of an identifier to the value of the expression.
+{{{
+Ten     .EQU   2 * 5     ; The ident Ten now has the value 10
+Accu    .EQU   s8        ; The ident Accu can be used instead of register s8
+}}}
+
+===.DEF===
+Define a formula with a parameter, represented by the @ symbol, where the parameter is replaced by the actual value of the calling value.
+{{{
+select  .DEF   (@1 << 5)
+...
+        MOVE   s0, select(3)   ; s0 will be (3 << 5) or 0b_0110_0000
+}}}
+*Note*: Only a call of one parameter is allowed, due to the current implementation. However, in one calling expression there can be more calls like:
+{{{
+initval .EQU   a( 3 ) | b( 4 ) ; when both a and b are .DEFined formulas
+}}}
+
+===.ORG===
+Set the origin of the next instruction.
+{{{
+        .ORG   0x100
+}}}
+
+===.SCR===
+Set the origin of the scratchpad memory in the code rom in case the second port of the code rom blockram is used as such or set it to 0 if a different block ram or distributed ram is used.
+{{{
+        .SCR   0x380, 256 ; use the last 128 words (=256 bytes) of the code rom
+        .SCR   0, 64      ; use separate block or distributed ram (as in the kcpsm core)
+}}}
+*Note*: In the latter case use the {{{-s<filename>}}} option in the command line to specify a separate data file to be used with a separate pBlazMRG run to initialize that distributed scartchpad RAM.
+
+===.TXT===
+Initialize the scratchpad with the textstring, including a zero byte.
+{{{
+prompt  .TXT  "\r\n>>"   ; 5 characters, CR, LF, 2 '>'s and a trailing zero.
+}}}
+
+===.BYT===
+{{{
+ver     .BYT   0x55      ; initialized 1 byte variable
+}}}
+
+===.WBE and .WLE===
+{{{
+val2    .WBE   0xAA55    ; initialized 2 byte variable, AA first byte
+val3    .WLE   0xAA55    ; initialized 2 byte variable, 55 first byte
+}}}
+
+===.LBE and .LLE===
+{{{
+val2    .LBE   0xAA123455 ; initialized 4 byte variable, AA first byte
+val3    .LLE   0xAA123455 ; initialized 4 byte variable, 55 first byte
+}}}
+
+===.BUF===
+{{{
+count   .BUF   4         ; uninitialized 4 byte variable
+}}}
+
+===.IF===
+{{{
+        .IF    _UART_    ; enable code generation when _UART_ is != 0
+UART:   MOVE   s0, UART_CS
+        ...
+        RET
+        .FI
+}}}
+.IF/.FI allow conditional code generation, similar to VHDL if/generate. Only code/data generation is controlled. Definitions are always active. It is not a C/C++ like textual modification.
+
+= Picoblaze-6 only opcodes =
+
+===Register bank opcodes:===
+{{{
+  BANK A       ; select register bank A
+  BANK B       ; select register bank B
+
+  STAR s0, s1  ; store s1 in the active bank to s0 in the inactive
+}}}
+
+===Test and compare:===
+{{{
+  TSTC  s0, s1  ; test with carry
+  TSTC  s0, 0x55
+
+  CMPC  s0, s1 ; compare 
+  CMPC  s0, 'A'
+}}}
+
+===JUMP and CALL:===
+{{{
+  JUMP  s1, s0  ; jump to the address defined in s0 and s1 concatenated
+  CALL  s1, s0
+}}}
+You can use normal expressions for splitting up labels in two registers:
+{{{
+  MOVE   s0, label % 256
+  MOVE   s1, label / 256
+}}}
+or:
+{{{
+  MOVE   s0, label & 0xFF
+  MOVE   s1, label >> 8
+}}}
+
+===Return===
+{{{
+  RET s0, 'Q'  ; load register 0 with a 'Q' and return
+}}}
+
+==Version===
+{{{
+  CORE s0     ; load the hardware buildnumber in s0
+}}}
+
+==Output constant===
+{{{
+  OUTK  0xA5, 13 ; put 0xA5 at port 13
+}}}
+
+= Additional opcodes =
+
+==SKIP==
+
+{{{
+  SKIP
+  SKIP  NC
+  SKIP  3
+  SKIP  Z, 4
+}}}
+example 'if then else':
+{{{
+  SKIP  C, 2              // if ( C )
+  CALL  Tx_GEN2_0         // else output 0
+  SKIP
+  CALL  Tx_GEN2_1         // then output 1
+}}}
+*Note*: SKIP is just translated to a JUMP opcode, there is no new opcode in the cores needed. The target address is calculated using the offset and the current location. Default offset is 1. (Just skip the next instruction)
+
+==BREAK==
+
+{{{
+  BREAK                   // non-removable breakpoint
+}}}
+*Note*: BREAK (0x23aaa) is implemented as a modified unconditional JUMP (0x22aaa) to the next address which effectively is a NOP. It is meant for the pBlazSIM simulator. The KCPSM6.VHD will treat BREAK and JUMP exactly the same.
+
+==INST==
+{{{
+  INST  0x3FFFF
+}}}
+inserts an instruction with an instruction value of 0x3FFFF in the coderom.
+
+= Prefered mnemonics =
+{{{
+  MOVE instead of LOAD
+  LD   instead of FETCH
+  ST   instead of STORE
+
+  RET  instead of RETURN
+  RETI instead of RETURNI
+
+  ADDC instead of ADDCY
+  SUBC instead of SUBCY
+
+  IN   instead of INPUT
+  OUT  instead of OUTPUT
+  OUTK instead of OUTPUTK
+
+  EINT instead of ENABLE INTERRUPT
+  DINT instead of DISABLE INTERRUPT
+
+  BANK instead of REGBANK
+  CORE instead of HWBUILD
+
+  TSTC instead of TESTCY
+  COMP instead of COMPARE
+  CMPC instead of COMPARECY
+
+  RET sX, 0xXX instead of LOAD&RETURN sX, XX
+}}}
+
+= Scratchpad Initialization =
+
+Specific for the pBlazASM suite is the possibility to initialize the scratchpad in addition to initializing the CodeROM.
+
+Initialization of the scratchpad memory is done in the Picoblaze assembler source by specifying the origin of the scratchpad by the .SCR directive and using directives like .TXT, .BYT, etc.
+The scratchpad can be either the blockram used for the CodeROM itself by using the second (byte-wide) port of that blockram, or the distributed memory based scratchpad as implemented in the original kcpsm3/6 core. Specifying an address within the code ROM, like 0x380, will instruct pBlazASM to include the scratchpad data in the code ROM contents .MEM file. The second argument of .SCR is the scratchpad size (64, 128 or 256). If you want to use a separate block ram or distributed RAM as scratchpad (as in the original kcpsm3 or kcpsm6 cores), just specify .SCR 0, 64 (or 128 or 256). Use the -s<file name> switch in this case to separate the code and data.
+
+Basically the pBlazMRG tool replaces instances on {INIT_XX}, {INITP_XX} and {INIT64_X}, {INIT128_X}, {INIT256_X} by constant strings with the appropriate values, similar to the kcpsmX tools of Xilinx. 
+
+For scratchpad initialization {INIT64_X}, {INIT128_X} and {INIT256_X} can be used in this way:
+{{{
+{begin template} -- at start of file
+...
+    type INIT_ARRAY_SMALL_SPM_t is array( 0 to 7 ) of bit_vector( 63 downto 0 ) ;
+    constant INIT_SMALL_SPM : INIT_ARRAY_SMALL_SPM_t := (
+        X"{INIT64_0}",
+        X"{INIT64_1}",
+        X"{INIT64_2}",
+        X"{INIT64_3}",
+        X"{INIT64_4}",
+        X"{INIT64_5}",
+        X"{INIT64_6}",    
+        X"{INIT64_7}"
+    ) ;
+
+    type INIT_ARRAY_MEDIUM_SPM_t is array( 0 to 7 ) of bit_vector( 127 downto 0 ) ;
+    constant INIT_MEDIUM_SPM : INIT_ARRAY_MEDIUM_SPM_t := (
+        X"{INIT128_0}",
+        X"{INIT128_1}",
+        X"{INIT128_2}",
+        X"{INIT128_3}",
+        X"{INIT128_4}",
+        X"{INIT128_5}",
+        X"{INIT128_6}",    
+        X"{INIT128_7}"
+    ) ;
+
+    type INIT_ARRAY_LARGE_SPM_t is array( 0 to 7 ) of bit_vector( 255 downto 0 ) ;
+    constant INIT_LARGE_SPM : INIT_ARRAY_LARGE_SPM_t := (
+        X"{INIT256_0}",
+        X"{INIT256_1}",
+        X"{INIT256_2}",
+        X"{INIT256_3}",
+        X"{INIT256_4}",
+        X"{INIT256_5}",
+        X"{INIT256_6}",    
+        X"{INIT256_7}"
+    ) ;
+...
+}}}
+The so defined bit based constants can be used to initialize the bit based distributed RAMs in the KCPSM core by using the full core as a template.
+
+= Makefile =
+
+Use a makefile like this to automate the assembly and merging:
+
+{{{
+# makefile support for pBlazASM/pBlazeMRG
+
+# List of PSM Files
+ASM_SRC = \
+config.psm\
+Init.psm\
+\
+USBMROM.psm
+
+# target name
+ENTITY = USBMROM
+
+# core type
+PICO=3
+
+# path to Mediatronix tools
+AS	="C:/SVN/pBlzASM6/bin/Debug/pBlazASM.exe"
+MG	="C:/SVN/pBlazMRG/bin/Debug/pBlazMRG.exe"
+DS	="C:/SVN/pBlazDIS/bin/Debug/pBlazDIS.exe"
+
+# WinAVR based GNU tools
+MD	= mkdir.exe
+RM	= rm.exe -f -v
+CP	= cp.exe
+
+# Options and filenames
+TEMPLATE = template.vhd
+
+MEM = $(ENTITY).mem
+SCR = $(ENTITY).scr
+VHD = $(ENTITY).vhd
+LST = $(ENTITY).lst
+ifeq ($(PICO),3)
+	AFLAGS = -3 -v
+	MGFLAGS = -v
+	DSFLAGS = -3 -v
+endif
+ifeq ($(PICO),6)
+	AFLAGS = -6 -v
+	MGFLAGS = -v
+	DSFLAGS = -6 -v
+endif
+
+.SUFFIXES : .psm .mem .vhd .psh .scr
+
+# assemble and merge
+all:	$(VHD)
+
+$(VHD):	$(MEM)
+	$(MG) $(MGFLAGS) -e$(ENTITY) -c$(MEM) -s$(SCR) -t$(TEMPLATE) $(VHD)
+
+$(MEM):	$(ASM_SRC)
+	$(AS) $(AFLAGS) -l$(LST) -m$(MEM) -s$(SCR) $(ASM_SRC) 
+
+
+# clean outputs
+clean:
+	$(RM) $(LST) $(MEM) $(SCR) $(VHD)		
+# 
+		
+}}}
+
+= Operation with BMM and MEM in an ISE project =
+
+*_Note_: This method is superseeded by pBlazBIT. See separate wiki at [http://code.google.com/p/pblazasm/wiki/pBlazBIT], or [http://www.mediatronix.com]*
+----
+
+Use a BMM file like this to associate the MEM file with your ISE design:
+
+{{{
+ADDRESS_SPACE Code_ROM RAMB18 WORD_ADDRESSING [0x00000000:0x000003FF]
+    BUS_BLOCK
+        iPico/program/prog_rom [17:0] ;
+    END_BUS_BLOCK;
+END_ADDRESS_SPACE;
+}}}
+
+The name of the block RAM (here: iPico/program/prog_rom) needs to be derived from the design through some voodoo, like xdl.exe.
+
+Merge is not necessary anymore. Add the CodeROM.MRG and CodeROM.BMM files to your ISE project.
+Add the following 'Other Bitgen Command Line Options' to the 'Generate programming file' (BitGen) function of your ISE project:
+
+{{{
+      -bd CodeROM.MEM
+}}}
+
+Now when 'make'ing a new version of CodeROM.MEM, ISE will see it has changed and 'Generate programming file' can be rerun to make a new bit/bin file.
+
+Remove the merge step from the makefile, since it would invalidate CodeROM.VHD, which will trigger a full build of your FPGA, instead of a mere BitGen.

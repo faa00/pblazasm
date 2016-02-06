@@ -1,0 +1,117 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes" ?>
+<CodeBlocks_project_file>
+	<FileVersion major="1" minor="6" />
+	<Project>
+		<Option title="pBlazASM" />
+		<Option pch_mode="2" />
+		<Option compiler="gcc" />
+		<Build>
+			<Target title="Debug">
+				<Option output="bin/Debug/pBlazASM" prefix_auto="1" extension_auto="1" />
+				<Option object_output="obj/Debug/" />
+				<Option type="1" />
+				<Option compiler="gcc" />
+				<Option parameters="-6 -v -g -l  C:\Users\Henk\Dropbox\Projects\pblazasm\Support\picobug.psm" />
+				<Compiler>
+					<Add option="-Winline" />
+					<Add option="-Wswitch-default" />
+					<Add option="-Wextra" />
+					<Add option="-Wall" />
+					<Add option="-pg" />
+					<Add option="-g" />
+					<Add option="-D_DEBUG_" />
+				</Compiler>
+				<Linker>
+					<Add option="-pg -lgmon" />
+				</Linker>
+			</Target>
+			<Target title="Release">
+				<Option output="bin/Release/pBlazASM" prefix_auto="1" extension_auto="1" />
+				<Option object_output="obj/Release/" />
+				<Option type="1" />
+				<Option compiler="gcc" />
+				<Option parameters="-h" />
+				<Compiler>
+					<Add option="-Wextra" />
+					<Add option="-Wall" />
+				</Compiler>
+				<Linker>
+					<Add option="-s" />
+				</Linker>
+			</Target>
+		</Build>
+		<Compiler>
+			<Add directory="../common" />
+		</Compiler>
+		<Linker>
+			<Add option="-static-libgcc" />
+		</Linker>
+		<Unit filename="../common/dbuf.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../common/dbuf.h" />
+		<Unit filename="../common/dbuf_string.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../common/dbuf_string.h" />
+		<Unit filename="../common/getopt.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../common/getopt.h" />
+		<Unit filename="../common/lkar.h" />
+		<Unit filename="../common/pbDirectives.h" />
+		<Unit filename="../common/pbLib.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../common/pbLib.h" />
+		<Unit filename="../common/pbLibgen.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../common/pbLibgen.h" />
+		<Unit filename="../common/pbTypes.h" />
+		<Unit filename="../common/version.h" />
+		<Unit filename="pBlazASM.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="pbErrors.h" />
+		<Unit filename="pbLexer.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="pbLexer.h" />
+		<Unit filename="pbOpcodes.h" />
+		<Unit filename="pbParser.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="pbParser.h" />
+		<Unit filename="pbSymbols.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="pbSymbols.h" />
+		<Unit filename="test.lst">
+			<Option target="Debug" />
+		</Unit>
+		<Unit filename="test.psm">
+			<Option target="Debug" />
+		</Unit>
+		<Extensions>
+			<code_completion />
+			<debugger />
+			<envvars />
+			<AutoVersioning>
+				<Scheme minor_max="10" build_max="0" rev_max="0" rev_rand_max="10" build_times_to_increment_minor="100" />
+				<Settings autoincrement="1" date_declarations="1" use_define="0" update_manifest="1" do_auto_increment="0" ask_to_increment="1" language="C" svn="0" svn_directory="" header_path="version.h" />
+				<Changes_Log show_changes_editor="0" app_title="released version %M.%m.%b of %p" changeslog_path="ChangesLog.txt" />
+				<Code header_guard="VERSION_H" namespace="AutoVersion" prefix="" />
+			</AutoVersioning>
+			<DoxyBlocks>
+				<comment_style block="0" line="0" />
+				<doxyfile_project />
+				<doxyfile_build />
+				<doxyfile_warnings />
+				<doxyfile_output />
+				<doxyfile_dot />
+				<general />
+			</DoxyBlocks>
+		</Extensions>
+	</Project>
+</CodeBlocks_project_file>
