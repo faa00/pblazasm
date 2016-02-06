@@ -1,6 +1,7 @@
 
 ## defines
 
+RM = rm
 INC = ../common
 CC = gcc
 

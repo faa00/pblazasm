@@ -65,6 +65,8 @@
 #endif
 #ifdef WIN32VERSION
 #define PBLAZSIM_VERSION_STR "2.1 beta Win32"
+#else
+#define PBLAZSIM_VERSION_STR "2.1 beta Linux"
 #endif
 
 #define COL_WIDTH 40
