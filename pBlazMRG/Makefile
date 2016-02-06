@@ -7,22 +7,23 @@
 
 ## defines
 
+INC = ../common
 RM = rm
-MP = "C:/tcc/inc"
-CC = "C:/tcc/tcc"
+CC = gcc
  
 C_SRCS += \
 ./pBlazMRG.c \
 ../common/dbuf.c \
 ../common/dbuf_string.c \
 ../common/pbLibgen.c \
+../common/pbLib.c \
 ../common/getopt.c
 
-EXE = "./pBlazMRG.exe"
+EXE = "./pBlazMRG"
 OBJS = $(C_SRCS:.c=.o)
 LIBS = 
-INCS = -I$(MP)"/include" -I"./inc" -I../common
-CFLAGS = $(INCS) -g3 -DWINDOWS -Wall -c -O3 -DTCC -DHAVE_STRING_H
+INCS = -I$(INC)
+CFLAGS = $(INCS) -g3 -Wall -c -O3 -DTCC -DHAVE_STRING_H
 
 MGFLAGS = -stest_data.mem -v
 ENTITY = test
