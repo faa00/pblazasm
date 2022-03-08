@@ -399,7 +399,7 @@ static error_t term ( uint32_t * result, symbol_t * (*current)(), symbol_t * (*n
 		h = find_symbol ( s, false, file_nbr ) ;
 		if ( gPass == 1 ) {
 			if ( h == NULL ) {
-				symbol_t * tok = tok_current() ;
+//				symbol_t * tok = tok_current() ;
 				add_symbol( tUNDEF, stNONE, s, unknown_value, file_nbr );
 			}
 			if ( h == NULL || h->type == tUNDEF ) {

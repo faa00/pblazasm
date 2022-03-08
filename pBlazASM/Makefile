@@ -22,7 +22,7 @@ OBJS = $(C_SRCS:.c=.o)
 LIBS = 
 INCS = -I$(INC)
 CFLAGS = $(INCS) -pg -g -g3 -Wall -c -O2 -DHAVE_STRING_H
-LDFLAGS = -pg -lgmon
+LFLAGS = -pg
 
 ## rules
 
@@ -32,7 +32,7 @@ all:	$(EXE) test
 # Tool invocations
 $(EXE):	$(OBJS)
 	@echo Building: $(EXE)
-	$(CC) -o $@ $^ $(LIBS)
+	$(CC) $(LFLAGS) -o $@ $^ $(LIBS)
 	
 %.o: %.c %.h
 	@echo Building: "$@"
