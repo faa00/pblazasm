@@ -21,7 +21,8 @@ EXE = "./pBlazASM"
 OBJS = $(C_SRCS:.c=.o)
 LIBS = 
 INCS = -I$(INC)
-CFLAGS = $(INCS) -g3 -Wall -c -O3 -DHAVE_STRING_H
+CFLAGS = $(INCS) -pg -g -g3 -Wall -c -O2 -DHAVE_STRING_H
+LDFLAGS = -pg -lgmon
 
 ## rules
 
